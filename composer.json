@@ -1,0 +1,19 @@
+{
+    "name": "eyf/modelify",
+    "type": "library",
+    "description": "Thin model layer on top of doctrine/dbal",
+    "authors": [
+        {
+            "name": "Benoit Sagols",
+            "email": "benoit.sagols@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+
+    },
+
+    "psr-4": {
+        "Eyf\\Modelify\\": "src/"
+    }
+}
