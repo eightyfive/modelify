@@ -1,5 +1,5 @@
 <?php
-namespace Modelify;
+namespace Eyf\Modelify;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\Expression\ExpressionBuilder;
@@ -15,7 +15,7 @@ class ModelQuery extends QueryBuilder
      * Initializes a new <tt>QueryBuilder</tt>.
      *
      * @param \Doctrine\DBAL\Connection $connection The DBAL Connection.
-     * @param \Modelify\ActiveRecord $model The model associated with the query.
+     * @param \Eyf\Modelify\ActiveRecord $model The model associated with the query.
      */
     public function __construct(Connection $connection, ActiveRecord $model, $includeFrom = true)
     {

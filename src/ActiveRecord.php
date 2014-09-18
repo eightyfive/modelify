@@ -1,11 +1,11 @@
 <?php
-namespace Modelify;
+namespace Eyf\Modelify;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\Expression\ExpressionBuilder;
 use Doctrine\DBAL\Query\QueryBuilder;
 
-use Modelify\Entity\LegacyEntity;
+use Eyf\Modelify\Entity\LegacyEntity;
 
 
 abstract class ActiveRecord extends LegacyEntity

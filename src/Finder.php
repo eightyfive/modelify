@@ -1,5 +1,5 @@
 <?php
-namespace Modelify;
+namespace Eyf\Modelify;
 
 use Doctrine\DBAL\Query\QueryBuilder;
 use Doctrine\DBAL\Connection;

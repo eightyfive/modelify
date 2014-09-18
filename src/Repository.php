@@ -1,12 +1,12 @@
 <?php
-namespace Modelify;
+namespace Eyf\Modelify;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Type;
 
 
-use Modelify\Entity\Entity;
-use Modelify\Behavior\Timestampable;
+use Eyf\Modelify\Entity\Entity;
+use Eyf\Modelify\Behavior\Timestampable;
 
 class Repository
 {

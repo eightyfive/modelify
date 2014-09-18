@@ -1,5 +1,5 @@
 <?php
-namespace Modelify\Behavior;
+namespace Eyf\Modelify\Behavior;
 
 interface Timestampable
 {

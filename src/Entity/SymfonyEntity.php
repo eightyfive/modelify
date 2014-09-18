@@ -1,5 +1,5 @@
 <?php
-namespace Modelify\Entity;
+namespace Eyf\Modelify\Entity;
 
 use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Constraints as Assert;

@@ -1,5 +1,5 @@
 <?php
-namespace Modelify\Entity;
+namespace Eyf\Modelify\Entity;
 
 interface EntityInterface
 {
