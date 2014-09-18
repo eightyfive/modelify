@@ -8,7 +8,6 @@
             "email": "benoit.sagols@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
     "require": {
 
     },
