@@ -8,11 +8,9 @@
             "email": "benoit.sagols@gmail.com"
         }
     ],
-    "minimum-stability": "dev-master",
     "require": {
 
     },
-
     "psr-4": {
         "Eyf\\Modelify\\": "src/"
     }
