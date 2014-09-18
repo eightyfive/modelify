@@ -30,7 +30,7 @@ class Finder
 
     public function find($id)
     {
-        return $this->findOneBy(array(array($this->primaryKey, 'eq', $id)));
+        return $this->findOneBy(array(array($this->primaryKey, 'eq', intval($id))));
     }
 
     public function findIn($ids)
