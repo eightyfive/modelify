@@ -141,7 +141,7 @@ class Finder
         }
         else if (is_array($orderBy)) {
 
-            if (is_array_assoc($orderBy)) {
+            if ($this->isArrayAssoc($orderBy)) {
                 $qb->orderBy(current(array_keys($orderBy)), current(array_values($orderBy)));
             }
             else {
@@ -276,5 +276,10 @@ class Finder
     public static function getOperators()
     {
         return array('=', '<>', '<', '<=', '>', '>=', 'eq', 'neq', 'lt', 'lte', 'gt', 'gte', 'isNull', 'isNotNull', 'like', 'notLike', 'in', 'notIn');
+    }
+
+    private function isArrayAssoc($arr)
+    {
+        return is_array($arr) && (bool)count(array_filter(array_keys($arr), 'is_string'));
     }
 }
