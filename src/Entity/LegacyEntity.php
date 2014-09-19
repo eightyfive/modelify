@@ -1,7 +1,7 @@
 <?php
 namespace Eyf\Modelify\Entity;
 
-abstract class LegacyEntity implements \ArrayAccess
+abstract class LegacyEntity extends Entity implements \ArrayAccess
 {   
     protected static $defaults = array();
 
@@ -20,6 +20,11 @@ abstract class LegacyEntity implements \ArrayAccess
         }
 
         return $this;
+    }
+
+    public function toArray()
+    {
+        return $this->attributes;
     }
 
     public function getAttributes()

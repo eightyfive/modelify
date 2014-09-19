@@ -5,7 +5,7 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraint;
 
-abstract class SymfonyEntity extends Entity implements SymfonyEntityInterface, \JsonSerializable
+abstract class SymfonyEntity extends Entity implements SymfonyEntityInterface
 {
     private $properties;
 
@@ -30,11 +30,6 @@ abstract class SymfonyEntity extends Entity implements SymfonyEntityInterface, \
         }
 
         return $attributes;
-    }
-
-    public function jsonSerialize()
-    {
-        return $this->toArray();
     }
 
     protected function getPropertiesFilter()

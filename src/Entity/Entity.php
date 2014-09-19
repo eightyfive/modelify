@@ -10,6 +10,11 @@ abstract class Entity implements EntityInterface
 
     abstract public function setFromArray(array $attrs);
 
+    public function jsonSerialize()
+    {
+        return $this->toArray();
+    }
+
     public static function getMetadata()
     {
         return array(
