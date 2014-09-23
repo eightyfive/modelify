@@ -1,7 +1,7 @@
 <?php
 namespace Eyf\Modelify\Entity;
 
-abstract class Entity implements EntityInterface
+abstract class Entity implements EntityInterface, \JsonSerialize
 {
     public function __construct(array $attrs = array())
     {
