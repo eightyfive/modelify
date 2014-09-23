@@ -91,7 +91,7 @@ class Repository
 
     public function save(Entity &$entity)
     {
-      $isUpdate = isset($data[$this->getPrimaryKey()]);
+      $isUpdate = $entity->getId() !== null;
 
       if ($entity instanceof Timestampable) {
         $now = new \DateTime();
@@ -105,7 +105,6 @@ class Repository
 
       $data = $entity->toArray();
       $qb = $this->db->createQueryBuilder();
-
 
       if ($isUpdate) {
 

@@ -7,6 +7,12 @@ abstract class LegacyEntity extends Entity implements \ArrayAccess
 
     protected $attributes = array();
 
+    public function getId()
+    {
+        $pKey = $this->getMetadata()['id'];
+        return isset($this->attributes[$pKey]) ? $this->attributes[$pKey] : null;
+    }
+
     public function __construct(array $attrs = array())
     {
         $attrs = array_merge(static::$defaults, $attrs);

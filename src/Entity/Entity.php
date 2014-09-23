@@ -8,6 +8,7 @@ abstract class Entity implements EntityInterface, \JsonSerializable
         $this->setFromArray($attrs);
     }
 
+    abstract public function getId();
     abstract public function setFromArray(array $attrs);
 
     public function jsonSerialize()

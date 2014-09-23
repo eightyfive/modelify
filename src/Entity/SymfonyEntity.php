@@ -9,6 +9,11 @@ abstract class SymfonyEntity extends Entity implements SymfonyEntityInterface
 {
     private $properties;
 
+    public function getId()
+    {
+        return $this->id;
+    }
+
     public function setFromArray(array $attrs)
     {
         foreach ($attrs as $key => $value) {

@@ -10,6 +10,11 @@ abstract class ArrayEntity extends Entity
         }
     }
 
+    public function getId()
+    {
+        return $this->attributes[$this->getMetadata()['id']];
+    }
+
     public function toArray()
     {
         return $this->attributes;
