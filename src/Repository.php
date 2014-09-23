@@ -94,7 +94,7 @@ class Repository
       $isUpdate = isset($data[$this->getPrimaryKey()]);
 
       if ($entity instanceof Timestampable) {
-        $now = new DateTime();
+        $now = new \DateTime();
         if ($isUpdate) {
             $entity->setUpdatedAt($now);
         } else {
