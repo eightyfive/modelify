@@ -72,6 +72,10 @@ class Repository
 
     public function getEntity($row)
     {
+        if (!$row) {
+            return null;
+        }
+        
         return new $this->entityName($row);
     }
 
