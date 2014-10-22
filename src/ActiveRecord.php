@@ -11,23 +11,10 @@ use Eyf\Modelify\Entity\ArrayEntity;
 abstract class ActiveRecord extends ArrayEntity
 {
     protected static $db;
-    protected static $repository;
-
-    protected $repositories = array();
-
-    protected static $tableName;
-    protected static $alias;
-    protected static $primaryKey = 'id';
-    protected static $foreignKey;
-    protected static $aliasCounter = 'a';
-
+    protected static $repositories = array();
 
     protected $hasMany              = array();
     protected $hasAndBelongsToMany  = array();
-
-    protected $defaultTableName;
-    protected $defaultAlias;
-    protected $defaultForeignKey;
 
     /**
       * Set the DBAL connection
@@ -44,23 +31,19 @@ abstract class ActiveRecord extends ArrayEntity
       */
     protected static function getRepository()
     {
-      if (!isset(static::$repository)) {
-        static::$repository = new Repository(self::$db, get_called_class());
-      }
-
-      return static::$repository;
+      return self::getEntityRepository(get_called_class());
     }
 
     /**
       * Get entity-related Repository
       */
-    protected function getEntityRepository($className)
+    protected static function getEntityRepository($className)
     {
-      if (!isset($this->repositories[$className])) {
-        $this->repositories[$className] = new Repository(self::$db, $className);
+      if (!isset(self::$repositories[$className])) {
+        self::$repositories[$className] = new Repository(self::$db, $className);
       }
 
-      return $this->repositories[$className];
+      return self::$repositories[$className];
     }
 
 
@@ -71,7 +54,7 @@ abstract class ActiveRecord extends ArrayEntity
       */
     public function save()
     {
-      self::getRepository()->save($this);
+      static::getRepository()->save($this);
 
       return $this;
     }
@@ -85,7 +68,7 @@ abstract class ActiveRecord extends ArrayEntity
       */
     public static function find($id)
     {
-        return self::getRepository()->find($id);
+        return static::getRepository()->find($id);
     }
 
     /**
@@ -95,7 +78,7 @@ abstract class ActiveRecord extends ArrayEntity
       */
     public static function findAll()
     {
-        return self::getRepository()->findAll();
+        return static::getRepository()->findAll();
     }
 
     /**
@@ -110,7 +93,7 @@ abstract class ActiveRecord extends ArrayEntity
       */
     public static function findBy(array $criteria, $orderBy = null, $limit = null, $offset = null)
     {
-        return self::getRepository()->findBy($criteria, $orderBy, $limit, $offset);
+        return static::getRepository()->findBy($criteria, $orderBy, $limit, $offset);
     }
 
     /**
@@ -123,7 +106,7 @@ abstract class ActiveRecord extends ArrayEntity
       */
     public static function findOneBy(array $criteria, $orderBy = null)
     {
-        return self::getRepository()->findOneBy($criteria, $orderBy);
+        return static::getRepository()->findOneBy($criteria, $orderBy);
     }
 
     /**
@@ -191,56 +174,15 @@ abstract class ActiveRecord extends ArrayEntity
       return $this->relationships[$className];
     }
 
-
-
-    /**
-      * Returns the table name associated with the model
-      *
-      * @return string
-      */
-    // public function getTableName()
-    // {
-    //   if (isset(static::$tableName))
-    //   {
-    //       return static::$tableName;
-    //   }
-    //   else if (!isset($this->defaultTableName))
-    //   {
-    //     $this->defaultTableName = $this->classToTableName(get_called_class());
-    //   }
-
-    //   return $this->defaultTableName;
-    // }
-
-
-    /**
-      * Returns the table alias used by DBAL
-      *
-      * @return string
-      */
-    // public function getAlias()
-    // {
-    //   if (isset(static::$alias))
-    //   {
-    //       return static::$alias;
-    //   }
-    //   else if (!isset($this->defaultAlias))
-    //   {
-    //     $this->defaultAlias = $this->getUniqueAlias();
-    //   }
-
-    //   return $this->defaultAlias;
-    // }
-
     /**
       * Returns the primary key of the table
       *
       * @return string
       */
-    // public function getPrimaryKey()
-    // {
-    //   return static::$primaryKey;
-    // }
+    public function getPrimaryKey()
+    {
+      return static::getRepository()->getPrimaryKey();
+    }
 
     /**
       * Returns the foreign key used in relationships
@@ -249,87 +191,6 @@ abstract class ActiveRecord extends ArrayEntity
       */
     public function getForeignKey()
     {
-      if (isset(static::$foreignKey))
-      {
-          return static::$foreignKey;
-      }
-      else if (!isset($this->defaultForeignKey))
-      {
-        $this->defaultForeignKey = $this->getTableName().'_id';
-      }
-
-      return $this->defaultForeignKey;
-    }
-
-
-    /**
-      * Generate a unique alias
-      *
-      * @return string
-      */
-    // public static function getUniqueAlias()
-    // {
-    //   return '`'.self::$aliasCounter++.'`';
-    // }
-
-    /**
-      * Builds a new query for this ActiveRecord according to criteria
-      *
-      * @param array $criteria
-      * @param array $orderBy
-      * @param int $limit
-      * @param int $offset
-      * @return QueryBuilder The query
-      */
-    // public function newQuery($includeFrom = true)
-    // {
-    //   $query = new ModelQuery(self::$db, $this, $includeFrom);
-
-    //   return $query;
-    // }
-
-    /**
-      * Builds the table name of the joining table in a "many-to-many :through" relationship
-      *
-      * @param string $tableName1
-      * @param string $tableName2
-      * @return string
-      */
-    public function getJoiningTableName($tableName1, $tableName2)
-    {
-      $tables = array($tableName1, $tableName2);
-      sort($tables);
-
-      // @todo
-      // HUGE caveat, have to figure out how to generate this table name
-      // WITHOUT being tight to `underscore` strategy
-      return implode('_', $tables);
-    }
-
-    /**
-      * Converts a class name to a table name
-      *
-      * @param string $className
-      * @return string
-      */
-    public function classToTableName($className)
-    {
-      $classPath = explode('\\', $className);
-      $className = end($classPath);
-
-      return $this->underscore($className);
-    }
-
-    /**
-      * Transforms a camelCase string into an underscored string
-      *
-      * @param string $string
-      * @return string
-      */
-    private function underscore($string)
-    {
-      $string = preg_replace('/(?<=[a-z])([A-Z])/', '_$1', $string);
-
-      return strtolower($string);
+      return static::getRepository()->getForeignKey();
     }
 }
