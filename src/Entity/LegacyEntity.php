@@ -77,7 +77,8 @@ abstract class LegacyEntity extends Entity implements \ArrayAccess
     public static function getMetadata()
     {
         return array(
-            'id'                    => 'id',
+            'primary_key'           => 'id',
+            'foreign_key'           => '%s_id',
             'table_name'            => null,
             'table_name_strategy'   => 'camelToSnake'
         );

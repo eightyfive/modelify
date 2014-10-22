@@ -3,6 +3,8 @@ namespace Eyf\Modelify\Entity;
 
 abstract class ArrayEntity extends Entity
 {
+    protected $attributes = array();
+
     public function setFromArray(array $attrs)
     {
         foreach ($attrs as $attr => $value) {
@@ -12,7 +14,7 @@ abstract class ArrayEntity extends Entity
 
     public function getId()
     {
-        return $this->attributes[$this->getMetadata()['id']];
+        return $this->attributes[$this->getMetadata()['primary_key']];
     }
 
     public function toArray()
@@ -22,14 +24,14 @@ abstract class ArrayEntity extends Entity
 
     public function __get($property)
     {
-        if (isset($this->attributes[$property]) {
+        if (isset($this->attributes[$property])) {
           return $this->attributes[$property];
         }
     }
 
     public function __set($property, $value)
     {
-        if (isset($this->attributes[$property]) {
+        if (isset($this->attributes[$property])) {
           $this->attributes[$property] = $value;
         }
     }

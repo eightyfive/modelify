@@ -9,19 +9,23 @@ class Finder
     protected $db;
     protected $tableName;
     protected $primaryKey;
+    protected $foreignKey;
     protected $alias;
     protected $aliasCounter = 'a';
 
-    public function __construct(Connection $db, $tableName, $primaryKey)
+    public function __construct(Connection $db, $tableName, $primaryKey, $foreignKey)
     {
+        $this->db = $db;
         $this->tableName = $tableName;
         $this->primaryKey = $primaryKey;
-        $this->db = $db;
+        $this->foreignKey = $foreignKey;
     }
 
-    protected function createQueryBuilder()
+    protected function createQueryBuilder($reset = true)
     {
-        unset($this->alias);
+        if ($reset) {
+            unset($this->alias);
+        }
 
         return $this->db->createQueryBuilder()
             ->select($this->getAlias().'.*')
@@ -36,11 +40,6 @@ class Finder
     public function findIn($ids)
     {
         return $this->findBy(array(array($this->primaryKey, 'in', $ids)));
-    }
-
-    public function findAll()
-    {
-        return $this->findBy(array());
     }
 
     public function findBy(array $criteria, $orderBy = null, $limit = null, $offset = null)
@@ -132,6 +131,49 @@ class Finder
 
         // Finally, add `where` clause
         $qb->where($andX);
+    }
+
+    /**
+      * Finds records through a joining table with $owner.
+      *
+      * @param string $ownerTableName The owner table name
+      * @param int $ownerId The owner ID
+      *
+      * @return array The rows
+      */
+    public function manyToMany($ownerTableName, $ownerKey, $ownerId, $throughOrderBy = null)
+    {
+      // Compute join table name
+      $table      = trim($this->tableName, '`');
+      $tableOwner = trim($ownerTableName, '`');
+      $tables     = array($tableOwner, $table);
+      sort($tables);
+
+      // $ownerKey = $tableOwner.'_id';
+
+      $joinTable = implode('_', $tables);
+      $joinAlias = $this->getNewAlias();
+      $joinCondition = sprintf('%s.%s = %s.%s',
+        $joinAlias,
+        $this->foreignKey,
+        $this->getAlias(),
+        $this->primaryKey
+      );
+
+      $qb = $this->createQueryBuilder(false);
+      $qb
+        ->leftJoin($this->getAlias(), $joinTable, $joinAlias, $joinCondition)
+        ->where($joinAlias.'.'.$ownerKey.' = ?')
+        ->setParameter(0, $ownerId);
+
+      if ($throughOrderBy) {
+        $this->addOrderBy($qb, $throughOrderBy);
+      }
+
+      // dd($qb->execute()->fetchAll());
+      // dd($qb. '');
+
+      return $qb->execute()->fetchAll();
     }
 
     protected function addOrderBy(QueryBuilder &$qb, $orderBy)

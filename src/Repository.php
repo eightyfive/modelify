@@ -26,7 +26,7 @@ class Repository
         $this->entityName     = $entityName;
         $this->entityMetadata = call_user_func(array($entityName, 'getMetadata'));
 
-        $this->finder = new Finder($this->db, $this->getTableName(), $this->getPrimaryKey());
+        $this->finder = new Finder($this->db, $this->getTableName(), $this->getPrimaryKey(), $this->getForeignKey());
     }
 
     public function find($id)
@@ -45,7 +45,7 @@ class Repository
 
     public function findAll()
     {
-        return $this->getEntities($this->finder->findAll());
+        return $this->getEntities($this->finder->findBy(array()));
     }
 
     public function findBy(array $criteria, $orderBy = null, $limit = null, $offset = null)
@@ -68,6 +68,11 @@ class Repository
     public function findOneBy(array $criteria, $orderBy = null)
     {
         return $this->getEntity($this->finder->findOneBy($criteria, $orderBy));
+    }
+
+    public function manyToMany(Repository $owners, $ownerId, $throughOrderBy = null)
+    {
+        return $this->getEntities($this->finder->manyToMany($owners->getTableName(), $owners->getForeignKey(), $ownerId, $throughOrderBy));
     }
 
     public function getEntity($row)
@@ -138,29 +143,34 @@ class Repository
 
       $qb->execute();
 
-      if (!$isUpdate) { // INSERT
+      if (!$isUpdate) {
         $entity->{$this->getPrimaryKey()} = $this->db->lastInsertId();
       }
     }
 
-    protected function getPrimaryKey()
+    public function getPrimaryKey()
     {
-        return $this->entityMetadata['id'];
+        return $this->entityMetadata['primary_key'];
     }
 
-    protected function getTableName()
+    public function getForeignKey()
+    {
+        return sprintf($this->entityMetadata['foreign_key'], $this->getTableName(false));
+    }
+
+    public function getTableName($escape = true)
     {
         if (!isset($this->tableName)) {
 
             if (isset($this->entityMetadata['table_name']) && !empty($this->entityMetadata['table_name'])) {
-                $this->tableName = $this->entityMetadata['table_name'];
+                $this->tableName = trim($this->entityMetadata['table_name'], '`');
             } else {
                 $names = explode('\\', $this->entityName);
-                $this->tableName = '`'.$this->camelToSnake(end($names)).'`';
+                $this->tableName = $this->camelToSnake(end($names));
             }
         }
 
-        return $this->tableName;
+        return $escape ? '`'.$this->tableName.'`' : $this->tableName;
     }
 
     protected function camelToSnake($camel)
@@ -170,41 +180,41 @@ class Repository
         return ctype_lower($camel) ? $camel : strtolower(preg_replace('/(.)([A-Z])/', $replace, $camel));
     }
 
-    protected function getTableDetails()
-    {
-        if (!isset($this->tableDetails)) {
-            $this->tableDetails = $this->db->getSchemaManager()->listTableDetails($this->getTablename());
-        }
+    // protected function getTableDetails()
+    // {
+    //     if (!isset($this->tableDetails)) {
+    //         $this->tableDetails = $this->db->getSchemaManager()->listTableDetails($this->getTablename());
+    //     }
 
-        return $this->tableDetails;
-    }
+    //     return $this->tableDetails;
+    // }
 
-    protected function getTableColumns()
-    {
-        if (!isset($this->tableColumns)) {
-            $columns = $this->getTableDetails()->getColumns();
-            $this->tableColumns = array();
+    // protected function getTableColumns()
+    // {
+    //     if (!isset($this->tableColumns)) {
+    //         $columns = $this->getTableDetails()->getColumns();
+    //         $this->tableColumns = array();
 
-            foreach ($columns as $column) {
-                $this->tableColumns[$column->getName()] = $column;
-            }
-        }
+    //         foreach ($columns as $column) {
+    //             $this->tableColumns[$column->getName()] = $column;
+    //         }
+    //     }
 
-        return $this->tableColumns;
-    }
+    //     return $this->tableColumns;
+    // }
 
-    public function getEntitySchema()
-    {
-        if (!isset($this->entitySchema)) {
+    // public function getEntitySchema()
+    // {
+    //     if (!isset($this->entitySchema)) {
 
-            $columns = $this->getTableColumns();
-            $this->entitySchema = array();
+    //         $columns = $this->getTableColumns();
+    //         $this->entitySchema = array();
 
-            foreach ($columns as $column) {
-                $this->entitySchema[$column->getName()] = $column->getType();
-            }
-        }
+    //         foreach ($columns as $column) {
+    //             $this->entitySchema[$column->getName()] = $column->getType();
+    //         }
+    //     }
 
-        return $this->entitySchema;
-    }
+    //     return $this->entitySchema;
+    // }
 }
