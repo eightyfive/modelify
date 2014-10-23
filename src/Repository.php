@@ -144,7 +144,7 @@ class Repository
       $qb->execute();
 
       if (!$isUpdate) {
-        $entity->{$this->getPrimaryKey()} = $this->db->lastInsertId();
+        $entity->{$this->getPrimaryKey()} = intval($this->db->lastInsertId());
       }
     }
 

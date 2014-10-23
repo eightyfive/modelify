@@ -14,7 +14,13 @@ abstract class ArrayEntity extends Entity
 
     public function getId()
     {
-        return $this->attributes[$this->getMetadata()['primary_key']];
+        $pKey = $this->getMetadata()['primary_key'];
+
+        if (!isset($this->attributes[$pKey])) {
+            return null;
+        }
+
+        return $this->attributes[$pKey];
     }
 
     public function toArray()
@@ -31,9 +37,7 @@ abstract class ArrayEntity extends Entity
 
     public function __set($property, $value)
     {
-        if (isset($this->attributes[$property])) {
-          $this->attributes[$property] = $value;
-        }
+        $this->attributes[$property] = $value;
     }
 
     public function __isset($property)
