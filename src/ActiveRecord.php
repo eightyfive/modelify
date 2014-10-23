@@ -60,6 +60,14 @@ abstract class ActiveRecord extends ArrayEntity
     }
 
     /**
+      * Delete an entity in DB
+      */
+    public function delete()
+    {
+      static::getRepository()->delete($this);
+    }
+
+    /**
       * Finds a record by its primary key / identifier.
       *
       * @param int $id The identifier.

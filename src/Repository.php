@@ -148,6 +148,11 @@ class Repository
       }
     }
 
+    public function delete(Entity $entity)
+    {
+        $this->db->delete($this->getTableName(), array($this->getPrimaryKey() => $entity->getId()));
+    }
+
     public function getPrimaryKey()
     {
         return $this->entityMetadata['primary_key'];
@@ -179,42 +184,4 @@ class Repository
  
         return ctype_lower($camel) ? $camel : strtolower(preg_replace('/(.)([A-Z])/', $replace, $camel));
     }
-
-    // protected function getTableDetails()
-    // {
-    //     if (!isset($this->tableDetails)) {
-    //         $this->tableDetails = $this->db->getSchemaManager()->listTableDetails($this->getTablename());
-    //     }
-
-    //     return $this->tableDetails;
-    // }
-
-    // protected function getTableColumns()
-    // {
-    //     if (!isset($this->tableColumns)) {
-    //         $columns = $this->getTableDetails()->getColumns();
-    //         $this->tableColumns = array();
-
-    //         foreach ($columns as $column) {
-    //             $this->tableColumns[$column->getName()] = $column;
-    //         }
-    //     }
-
-    //     return $this->tableColumns;
-    // }
-
-    // public function getEntitySchema()
-    // {
-    //     if (!isset($this->entitySchema)) {
-
-    //         $columns = $this->getTableColumns();
-    //         $this->entitySchema = array();
-
-    //         foreach ($columns as $column) {
-    //             $this->entitySchema[$column->getName()] = $column->getType();
-    //         }
-    //     }
-
-    //     return $this->entitySchema;
-    // }
 }
