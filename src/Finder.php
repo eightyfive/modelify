@@ -210,9 +210,10 @@ class Finder
         return $this->alias;
     }
 
-    protected function getNewAlias()
+    protected function getNewAlias($escape = true)
     {
-        return $this->aliasCounter++;
+        $this->aliasCounter++;
+        return $escape ? '`'.$this->aliasCounter.'`' : $this->aliasCounter;
     }
 
     protected function camelToSnake($value, $delimiter = '_')
