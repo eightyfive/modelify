@@ -167,7 +167,7 @@ class Finder
         ->setParameter(0, $ownerId);
 
       if ($throughOrderBy) {
-        $this->addOrderBy($qb, $throughOrderBy);
+        $this->addOrderBy($qb, $throughOrderBy, $joinAlias);
       }
 
       // dd($qb->execute()->fetchAll());
@@ -176,28 +176,43 @@ class Finder
       return $qb->execute()->fetchAll();
     }
 
-    protected function addOrderBy(QueryBuilder &$qb, $orderBy)
+    protected function addOrderBy(QueryBuilder &$qb, $orderBy, $alias = null)
     {
+        $orders = array();
+
         if (is_string($orderBy)) {
-            $qb->orderBy($orderBy);
-        }
-        else if (is_array($orderBy)) {
+            array_push($orders, array($orderBy, null));
+
+            // $qb->orderBy($alias.'.'.$orderBy);
+        } else if (is_array($orderBy)) {
 
             if ($this->isArrayAssoc($orderBy)) {
-                $qb->orderBy(current(array_keys($orderBy)), current(array_values($orderBy)));
-            }
-            else {
+                array_push($orders, array(current(array_keys($orderBy)), current(array_values($orderBy))));
+
+                // $qb->orderBy($alias.'.'.current(array_keys($orderBy)), current(array_values($orderBy)));
+            } else {
 
                 foreach ($orderBy as $order) {
 
                     if (is_string($order)) {
-                        $qb->addOrderBy($order);
-                    }
-                    else if (is_array($order)){
-                        $qb->addOrderBy(current(array_keys($order)), current(array_values($order)));
+                        array_push($orders, array($order, null));
+
+                        // $qb->addOrderBy($alias.'.'.$order);
+                    } else if (is_array($order)){
+                        array_push($orders, array(current(array_keys($order)), current(array_values($order))));
+
+                        // $qb->addOrderBy($alias.'.'.current(array_keys($order)), current(array_values($order)));
                     }
                 }
             }
+        }
+
+        if (!$alias) {
+            $alias = $this->getAlias();
+        }
+
+        foreach ($orders as $order) {
+            $qb->addOrderBy($alias.'.'.$order[0], $order[1]);
         }
     }
 
