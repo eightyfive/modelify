@@ -5,11 +5,9 @@ abstract class ArrayEntity extends Entity
 {
     protected $attributes = array();
 
-    public function setFromArray(array $attrs)
+    public function setAttribute($key, $value)
     {
-        foreach ($attrs as $attr => $value) {
-            $this->attributes[$attr] = $value;
-        }
+        $this->attributes[$key] = $value;
     }
 
     public function getId()
@@ -23,7 +21,7 @@ abstract class ArrayEntity extends Entity
         return $this->attributes[$pKey];
     }
 
-    public function toArray()
+    public function getAttributes()
     {
         return $this->attributes;
     }

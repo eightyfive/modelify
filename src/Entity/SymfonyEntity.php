@@ -14,14 +14,12 @@ abstract class SymfonyEntity extends Entity implements SymfonyEntityInterface
         return $this->id;
     }
 
-    public function setFromArray(array $attrs)
+    public function setAttribute($key, $value)
     {
-        foreach ($attrs as $key => $value) {
-            $this->{$key} = $value;
-        }
+        $this->{$key} = $value;
     }
 
-    public function toArray()
+    public function getAttributes()
     {
         if (!isset($this->properties)) {
             $reflected = new \ReflectionClass($this);
