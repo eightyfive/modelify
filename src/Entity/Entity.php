@@ -10,8 +10,10 @@ abstract class Entity implements EntityInterface, \JsonSerializable
             $attrType = $this->getAttributeType($key);
             if ($attrType) {
 
-                if ($attrType === 'json' && is_string($value)) {
-                    $value = json_decode($value, true);
+                if ($attrType === 'json') {
+                    if (is_string($value)) {
+                        $value = json_decode($value, true);
+                    }
                 } else {
                     settype($value, $attrType);
                 }
