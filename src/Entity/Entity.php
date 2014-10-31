@@ -3,9 +3,18 @@ namespace Eyf\Modelify\Entity;
 
 abstract class Entity implements EntityInterface, \JsonSerializable
 {
-    public function __construct(array $data = array())
+    public function __construct(array $attrs = array())
     {
-        foreach ($data as $key => $value) {
+        $this->setAttributes($attrs);
+    }
+
+    abstract public function getId();
+    abstract public function getAttributes();
+    abstract public function setAttribute($key, $value);
+    
+    public function setAttributes(array $attrs)
+    {
+        foreach ($attrs as $key => $value) {
 
             $attrType = $this->getAttributeType($key);
             if ($attrType) {
@@ -26,10 +35,6 @@ abstract class Entity implements EntityInterface, \JsonSerializable
             }
         }
     }
-
-    abstract public function getId();
-    abstract public function setAttribute($key, $value);
-    abstract public function getAttributes();
 
     protected function setArrayAttribute($key, array $data)
     {
