@@ -2,49 +2,29 @@
 namespace Eyf\Modelify;
 
 use Doctrine\DBAL\Query\QueryBuilder;
-use Doctrine\DBAL\Connection;
 
 class Finder
 {
-    protected $db;
-    protected $tableName;
-    protected $primaryKey;
-    protected $foreignKey;
-    protected $alias;
-    protected $aliasCounter = 'a';
+    protected $repo;
 
-    public function __construct(Connection $db, $tableName, $primaryKey, $foreignKey)
+    public function __construct(Repository $repo)
     {
-        $this->db = $db;
-        $this->tableName = $tableName;
-        $this->primaryKey = $primaryKey;
-        $this->foreignKey = $foreignKey;
-    }
-
-    protected function createQueryBuilder($reset = true)
-    {
-        if ($reset) {
-            unset($this->alias);
-        }
-
-        return $this->db->createQueryBuilder()
-            ->select($this->getAlias().'.*')
-            ->from($this->tableName, $this->getAlias());
+        $this->repo = $repo;
     }
 
     public function find($id)
     {
-        return $this->findOneBy(array(array($this->primaryKey, 'eq', intval($id))));
+        return $this->findOneBy(array(array($this->repo->getPrimaryKey(), 'eq', intval($id))));
     }
 
     public function findIn($ids)
     {
-        return $this->findBy(array(array($this->primaryKey, 'in', $ids)));
+        return $this->findBy(array(array($this->repo->getPrimaryKey(), 'in', $ids)));
     }
 
     public function findBy(array $criteria, $orderBy = null, $limit = null, $offset = null)
     {
-        $qb = $this->createQueryBuilder();
+        $qb = $this->repo->createQueryBuilder();
 
         if (count($criteria)) {
             $this->addWhere($qb, $criteria);
@@ -67,24 +47,13 @@ class Finder
 
     public function findOneBy(array $criteria)
     {
-        $qb = $this->createQueryBuilder();
+        $qb = $this->repo->createQueryBuilder();
 
         if (count($criteria)) {
             $this->addWhere($qb, $criteria);
         }
 
         return $qb->execute()->fetch();
-    }
-
-    public function rowCount(array $criteria = array())
-    {
-        $qb = $this->createQueryBuilder();
-
-        if (count($criteria)) {
-            $this->addWhere($qb, $criteria);
-        }
-
-        return $qb->execute()->rowCount();
     }
 
     public function addWhere(QueryBuilder &$qb, array $criteria)
@@ -130,7 +99,7 @@ class Finder
         }
 
         // Finally, add `where` clause
-        $qb->where($andX);
+        $qb->andWhere($andX);
     }
 
     /**
@@ -141,39 +110,36 @@ class Finder
       *
       * @return array The rows
       */
-    public function manyToMany($ownerTableName, $ownerKey, $ownerId, $throughOrderBy = null)
+    public function manyToMany(Repository $owners, $ownerId, $throughOrderBy = null)
     {
-      // Compute join table name
-      $table      = trim($this->tableName, '`');
-      $tableOwner = trim($ownerTableName, '`');
-      $tables     = array($tableOwner, $table);
-      sort($tables);
+        $qb = $this->repo->createQueryBuilder();
 
-      // $ownerKey = $tableOwner.'_id';
+        // Compute join table name
+        $tables     = array($owners->getTableName(false), $this->repo->getTableName(false));
+        sort($tables);
 
-      $joinTable = implode('_', $tables);
-      $joinAlias = $this->getNewAlias();
-      $joinCondition = sprintf('%s.%s = %s.%s',
-        $joinAlias,
-        $this->foreignKey,
-        $this->getAlias(),
-        $this->primaryKey
-      );
+        $joinTable = implode('_', $tables);
+        $joinAlias = $this->repo->getNewAlias();
+        $joinCondition = sprintf('%s.%s = %s.%s',
+            $joinAlias,
+            $this->repo->getForeignKey(),
+            $this->repo->getAlias(),
+            $this->repo->getPrimaryKey()
+        );
 
-      $qb = $this->createQueryBuilder(false);
-      $qb
-        ->leftJoin($this->getAlias(), $joinTable, $joinAlias, $joinCondition)
-        ->where($joinAlias.'.'.$ownerKey.' = ?')
-        ->setParameter(0, $ownerId);
+        $qb
+            ->leftJoin($this->repo->getAlias(), $joinTable, $joinAlias, $joinCondition)
+            ->where($joinAlias.'.'.$owners->getForeignKey().' = ?')
+            ->setParameter(0, $ownerId);
 
-      if ($throughOrderBy) {
-        $this->addOrderBy($qb, $throughOrderBy, $joinAlias);
-      }
+        if ($throughOrderBy) {
+            $this->addOrderBy($qb, $throughOrderBy, $joinAlias);
+        }
 
-      // dd($qb->execute()->fetchAll());
-      // dd($qb. '');
+        // dd($qb->execute()->fetchAll());
+        // dd($qb. '');
 
-      return $qb->execute()->fetchAll();
+        return $qb->execute()->fetchAll();
     }
 
     protected function addOrderBy(QueryBuilder &$qb, $orderBy, $alias = null)
@@ -183,59 +149,31 @@ class Finder
         if (is_string($orderBy)) {
             array_push($orders, array($orderBy, null));
 
-            // $qb->orderBy($alias.'.'.$orderBy);
         } else if (is_array($orderBy)) {
 
             if ($this->isArrayAssoc($orderBy)) {
                 array_push($orders, array(current(array_keys($orderBy)), current(array_values($orderBy))));
-
-                // $qb->orderBy($alias.'.'.current(array_keys($orderBy)), current(array_values($orderBy)));
             } else {
 
                 foreach ($orderBy as $order) {
 
                     if (is_string($order)) {
                         array_push($orders, array($order, null));
-
-                        // $qb->addOrderBy($alias.'.'.$order);
+                        
                     } else if (is_array($order)){
                         array_push($orders, array(current(array_keys($order)), current(array_values($order))));
-
-                        // $qb->addOrderBy($alias.'.'.current(array_keys($order)), current(array_values($order)));
                     }
                 }
             }
         }
 
         if (!$alias) {
-            $alias = $this->getAlias();
+            $alias = $this->repo->getAlias();
         }
 
         foreach ($orders as $order) {
             $qb->addOrderBy($alias.'.'.$order[0], $order[1]);
         }
-    }
-
-    protected function getAlias()
-    {
-        if (!isset($this->alias)) {
-            $this->alias = $this->getNewAlias();
-        }
-
-        return $this->alias;
-    }
-
-    protected function getNewAlias($escape = true)
-    {
-        $this->aliasCounter++;
-        return $escape ? '`'.$this->aliasCounter.'`' : $this->aliasCounter;
-    }
-
-    protected function camelToSnake($value, $delimiter = '_')
-    {
-        $replace = '$1'.$delimiter.'$2';
- 
-        return ctype_lower($value) ? $value : strtolower(preg_replace('/(.)([A-Z])/', $replace, $value));
     }
 
     /**
@@ -292,7 +230,7 @@ class Finder
         $operator = $this->normalizeOperator($operator);
 
         if (strpos($property, '.') === false) {
-            $property = $this->getAlias().'.'.$property;
+            $property = $this->repo->getAlias().'.'.$property;
         }
 
         if (!isset($value)) {

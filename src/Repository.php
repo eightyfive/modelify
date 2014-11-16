@@ -2,8 +2,6 @@
 namespace Eyf\Modelify;
 
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Types\Type;
-
 
 use Eyf\Modelify\Entity\Entity;
 use Eyf\Modelify\Behavior\Timestampable;
@@ -14,11 +12,10 @@ class Repository
 
     protected $entityName;
     protected $entityMetadata;
-    protected $entitySchema;
 
     protected $tableName;
-    protected $tableDetails;
-    protected $tableColumns;
+    protected $alias;
+    protected static $aliasCounter = 'a';
 
     public function __construct(Connection $db, $entityName)
     {
@@ -26,7 +23,19 @@ class Repository
         $this->entityName     = $entityName;
         $this->entityMetadata = call_user_func(array($entityName, 'getMetadata'));
 
-        $this->finder = new Finder($this->db, $this->getTableName(), $this->getPrimaryKey(), $this->getForeignKey());
+        $this->finder = new Finder($this);
+    }
+
+    public function getEntityClassName()
+    {
+        return $this->entityName;
+    }
+
+    public function createQueryBuilder()
+    {
+        return $this->db->createQueryBuilder()
+            ->select($this->getAlias().'.*')
+            ->from($this->getTableName(), $this->getAlias());
     }
 
     public function find($id)
@@ -53,11 +62,6 @@ class Repository
         return $this->getEntities($this->finder->findBy($criteria, $orderBy, $limit, $offset));
     }
 
-    public function rowCount(array $criteria = array())
-    {
-        return $this->finder->rowCount($criteria);
-    }
-
     public function paginate($page, $perPage, array $criteria = array(), $orderBy = null)
     {
         $offset = ($page-1) * $perPage;
@@ -72,7 +76,7 @@ class Repository
 
     public function manyToMany(Repository $owners, $ownerId, $throughOrderBy = null)
     {
-        return $this->getEntities($this->finder->manyToMany($owners->getTableName(), $owners->getForeignKey(), $ownerId, $throughOrderBy));
+        return $this->getEntities($this->finder->manyToMany($owners, $ownerId, $throughOrderBy));
     }
 
     public function getEntity($row)
@@ -98,9 +102,16 @@ class Repository
         return $entities;
     }
 
+    protected function beforeSave($isUpdate, Entity &$entity)
+    {
+        // ...
+    }
+
     public function save(Entity &$entity)
     {
       $isUpdate = $entity->getId() !== null;
+
+      $this->beforeSave($isUpdate, $entity);
 
       if ($entity instanceof Timestampable) {
         $now = new \DateTime();
@@ -183,5 +194,22 @@ class Repository
         $replace = '$1_$2';
  
         return ctype_lower($camel) ? $camel : strtolower(preg_replace('/(.)([A-Z])/', $replace, $camel));
+    }
+
+    public function getAlias()
+    {
+        if (!isset($this->alias)) {
+            $this->alias = $this->getNewAlias();
+        }
+
+        return $this->alias;
+    }
+
+    public function getNewAlias($escape = true)
+    {
+        $alias = self::$aliasCounter;
+        self::$aliasCounter++;
+
+        return $escape ? '`'.$alias.'`' : $alias;
     }
 }

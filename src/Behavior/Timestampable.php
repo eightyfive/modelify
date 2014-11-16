@@ -3,8 +3,8 @@ namespace Eyf\Modelify\Behavior;
 
 interface Timestampable
 {
-    public function getCreatedAt();
+    const MYSQL_DATETIME_FORMAT = 'Y-m-d H:i:s';
+
     public function setCreatedAt(\DateTime $datetime);
-    public function getUpdatedAt();
     public function setUpdatedAt(\DateTime $datetime);
 }

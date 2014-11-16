@@ -10,6 +10,11 @@ abstract class ArrayEntity extends Entity
         $this->attributes[$key] = $value;
     }
 
+    public function getAttribute($key)
+    {
+        return $this->attributes[$key];
+    }
+
     public function getId()
     {
         $pKey = $this->getMetadata()['primary_key'];
@@ -41,5 +46,10 @@ abstract class ArrayEntity extends Entity
     public function __isset($property)
     {
         return array_key_exists($property, $this->attributes);
+    }
+
+    public function __unset($property)
+    {
+        unset($this->attributes[$property]);
     }
 }
