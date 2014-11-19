@@ -21,19 +21,19 @@ class RepositoryTranslatable extends Repository
     protected $transJoin;
 
 
-    public function __construct(Connection $db, $entityName, $pattern = '%s_t')
+    public function __construct(Connection $db, $entityClassName, $pattern = '%s_t')
     {
-        parent::__construct($db, $entityName);
+        parent::__construct($db, $entityClassName);
 
         $alias = $this->getNewAlias();
 
-        $this->translatables = call_user_func(array($entityName, 'getTranslatables'));
+        $this->translatables = call_user_func(array($entityClassName, 'getTranslatables'));
 
         $this->transSelect = array_merge(array($this->getAlias().'.*'), array_map(function($attr) use ($alias) {
             return $alias.'.'.$attr;
         }, $this->translatables));
 
-        $this->transTable  = sprintf($pattern, $this->getTableName(false));
+        $this->transTable = sprintf($pattern, $this->getTableName(false));
         $this->transAlias = $alias;
         $this->transJoin  = sprintf('%s.%s = %s.%s',
             $this->transAlias,
@@ -111,15 +111,7 @@ class RepositoryTranslatable extends Repository
     {
         $criteriaAliased = array();
 
-        foreach ($criteria as $i=>$criterion) {
-
-            if (is_string($i)) { // Assoc array: ['name' => 'john']...
-                $attr = $i;
-            } else if (is_array($criterion)){
-                $attr = $criterion[0];
-            } else {
-                continue;
-            }
+        foreach ($criteria as $attr=>$criterion) {
 
             if (strpos($attr, '.') !== false) {
                 continue;
@@ -131,15 +123,9 @@ class RepositoryTranslatable extends Repository
 
             // This criterion is part of the Translations table
             unset($criteria[$i]);
-
+            
             $aliased = $this->transAlias.'.'.$attr;
-
-            if (is_string($i)) {
-                $criteriaAliased[$aliased] = $criterion;
-            } else {
-                $criterion[0] = $aliased;
-                $criteriaAliased[] = $criterion;
-            }
+            $criteriaAliased[$aliased] = $criterion;
         }
 
         return array_merge($criteria, $criteriaAliased);

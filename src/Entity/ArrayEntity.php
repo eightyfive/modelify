@@ -3,21 +3,35 @@ namespace Eyf\Modelify\Entity;
 
 abstract class ArrayEntity extends Entity
 {
+    protected static $schema = array();
+
     protected $attributes = array();
 
     public function setAttribute($key, $value)
     {
+        if (!in_array($key, $this->schema) {
+            throw new RuntimeException('Unknown attribute: '.$key);
+        }
+
         $this->attributes[$key] = $value;
     }
 
     public function getAttribute($key)
     {
+        if (!in_array($key, $this->schema) {
+            throw new RuntimeException('Unknown attribute: '.$key);
+        }
+
+        if (!isset($this->attributes[$key])) {
+            return null;
+        }
+
         return $this->attributes[$key];
     }
 
     public function getId()
     {
-        $pKey = $this->getMetadata()['primary_key'];
+        $pKey = $this->getMetadata()->getPrimaryKey();
 
         if (!isset($this->attributes[$pKey])) {
             return null;
@@ -33,14 +47,12 @@ abstract class ArrayEntity extends Entity
 
     public function __get($property)
     {
-        if (isset($this->attributes[$property])) {
-          return $this->attributes[$property];
-        }
+        return $this->getAttribute($property);
     }
 
     public function __set($property, $value)
     {
-        $this->attributes[$property] = $value;
+        $this->setAttribute($property, $value);
     }
 
     public function __isset($property)

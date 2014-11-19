@@ -10,25 +10,24 @@ class Repository
 {
     protected $db;
 
-    protected $entityName;
-    protected $entityMetadata;
+    protected $entityClassName;
+    protected $metadata;
 
-    protected $tableName;
     protected $alias;
     protected static $aliasCounter = 'a';
 
-    public function __construct(Connection $db, $entityName)
+    public function __construct(Connection $db, $entityClassName)
     {
-        $this->db             = $db;
-        $this->entityName     = $entityName;
-        $this->entityMetadata = call_user_func(array($entityName, 'getMetadata'));
+        $this->db              = $db;
+        $this->metadata        = call_user_func(array($entityClassName, 'getMetadata'));
+        $this->entityClassName = $entityClassName;
 
         $this->finder = new Finder($this);
     }
 
     public function getEntityClassName()
     {
-        return $this->entityName;
+        return $this->entityClassName;
     }
 
     public function createQueryBuilder()
@@ -47,14 +46,14 @@ class Repository
         return $this->getEntity($this->finder->find($id));
     }
 
-    public function findIn($ids)
+    public function findIn(array $ids)
     {
         return $this->getEntities($this->finder->findIn($ids));
     }
 
-    public function findAll()
+    public function findAll($orderBy = null, $limit = null, $offset = null)
     {
-        return $this->getEntities($this->finder->findBy(array()));
+        return $this->getEntities($this->finder->findBy(array(), $orderBy, $limit, $offset));
     }
 
     public function findBy(array $criteria, $orderBy = null, $limit = null, $offset = null)
@@ -85,7 +84,7 @@ class Repository
             return null;
         }
         
-        return new $this->entityName($row);
+        return new $this->entityClassName($row);
     }
 
     public function getEntities(array $rows)
@@ -166,34 +165,19 @@ class Repository
 
     public function getPrimaryKey()
     {
-        return $this->entityMetadata['primary_key'];
+        return $this->metadata->getPrimaryKey();
     }
 
     public function getForeignKey()
     {
-        return sprintf($this->entityMetadata['foreign_key'], $this->getTableName(false));
+        return $this->metadata->getForeignKey();
     }
 
     public function getTableName($escape = true)
     {
-        if (!isset($this->tableName)) {
+        $table = $this->metadata->getTableName();
 
-            if (isset($this->entityMetadata['table_name']) && !empty($this->entityMetadata['table_name'])) {
-                $this->tableName = trim($this->entityMetadata['table_name'], '`');
-            } else {
-                $names = explode('\\', $this->entityName);
-                $this->tableName = $this->camelToSnake(end($names));
-            }
-        }
-
-        return $escape ? '`'.$this->tableName.'`' : $this->tableName;
-    }
-
-    protected function camelToSnake($camel)
-    {
-        $replace = '$1_$2';
- 
-        return ctype_lower($camel) ? $camel : strtolower(preg_replace('/(.)([A-Z])/', $replace, $camel));
+        return $escape ? '`'.$table.'`' : $table;
     }
 
     public function getAlias()

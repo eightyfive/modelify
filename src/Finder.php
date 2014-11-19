@@ -14,12 +14,12 @@ class Finder
 
     public function find($id)
     {
-        return $this->findOneBy(array(array($this->repo->getPrimaryKey(), 'eq', intval($id))));
+        return $this->findOneBy(array($this->repo->getPrimaryKey() => array('eq', intval($id))));
     }
 
     public function findIn($ids)
     {
-        return $this->findBy(array(array($this->repo->getPrimaryKey(), 'in', $ids)));
+        return $this->findBy(array($this->repo->getPrimaryKey() => array('in', $ids)));
     }
 
     public function findBy(array $criteria, $orderBy = null, $limit = null, $offset = null)
@@ -54,52 +54,6 @@ class Finder
         }
 
         return $qb->execute()->fetch();
-    }
-
-    public function addWhere(QueryBuilder &$qb, array $criteria)
-    {
-        $criteria = $this->normalizeCriteria($criteria);
-
-        $andX = $qb->expr()->andX();
-
-        foreach ($criteria as $criterion) {
-
-            list($property, $operator, $value) = $criterion;
-
-            // ll($property);
-            // ll($operator);
-            // ll($value);
-            // die;
-
-            if (isset($value)) {
-
-                $args = array($property);
-
-                if (is_array($value)) { // IN
-                    $in = array();
-
-                    foreach($value as $val) {
-                        $in[] = $qb->createPositionalParameter($val);
-                    }
-
-                    // ['?','?','?','?', ... ,'?']
-                    $args[] = $in;
-                }
-                else {
-                    // '?'
-                    $args[] = $qb->createPositionalParameter($value);
-                }
-
-                $expr = call_user_func_array(array($qb->expr(), $operator), $args);
-            } else {
-                $expr = call_user_func(array($qb->expr(), $operator), $property);
-            }
-
-            $andX->add($expr);
-        }
-
-        // Finally, add `where` clause
-        $qb->andWhere($andX);
     }
 
     /**
@@ -142,6 +96,51 @@ class Finder
         return $qb->execute()->fetchAll();
     }
 
+    protected function addWhere(QueryBuilder &$qb, array $criteria)
+    {
+        $criteria = $this->normalizeCriteria($criteria);
+
+        $andX = $qb->expr()->andX();
+
+        foreach ($criteria as $property=>$criterion) {
+
+            if (strpos($property, '.') === false) {
+                $property = $this->repo->getAlias().'.'.$property;
+            }
+
+            list($operator, $value) = $this->normalizeCriterion($criterion);
+
+            if ($value !== null) {
+
+                $args = array($property);
+
+                if (is_array($value)) { // IN
+                    $in = array();
+
+                    foreach($value as $val) {
+                        $in[] = $qb->createPositionalParameter($val);
+                    }
+
+                    // ['?','?','?','?', ... ,'?']
+                    $args[] = $in;
+                }
+                else {
+                    // '?'
+                    $args[] = $qb->createPositionalParameter($value);
+                }
+
+                $expr = call_user_func_array(array($qb->expr(), $operator), $args);
+            } else {
+                $expr = call_user_func(array($qb->expr(), $operator), $property);
+            }
+
+            $andX->add($expr);
+        }
+
+        // Finally, add `where` clause
+        $qb->andWhere($andX);
+    }
+
     protected function addOrderBy(QueryBuilder &$qb, $orderBy, $alias = null)
     {
         $orders = array();
@@ -177,51 +176,57 @@ class Finder
     }
 
     /**
-      * Normalize a criteria.
+      * Normalize some criteria.
+      *
+      * From: [
+      *     'foo' => 'bar',
+      *     'oof' => ['lte', 4] ...
+      * ]
+      *
+      * To: [
+      *     'foo' => ['eq', 'bar'],
+      *     'oof' => ['lte', 4] ...
+      * ]
       *
       * @param array $criteria
       * @return array The normalized criteria
       */
     protected function normalizeCriteria(array $criteria)
     {
-        $normalized = array();
+        return array_map(function($val) {
 
-        foreach ($criteria as $i=>$criterion) {
-
-            if (is_string($i)) { // ['name' => 'john'] or ['label' => '%foo%']..
-
-                // '*' and '%' serve the same purpose
-                $criterion = str_replace('*', '%', $criterion);
-
-                if (strpos($criterion, '%') === false) {
-                    $criterion = array($i, 'eq', $criterion);
-                }
-                else {
-                    $criterion = array($i, 'like', $criterion);
-                }
+            if (!is_array($val)) {
+                $val = array((strpos($val, '%') === false) ? 'eq' : 'like', $val);
             }
 
-            array_push($normalized, $this->normalizeCriterion($criterion));
-        }
+            return $val;
 
-        return $normalized;
+        }, $criteria);
     }
 
     /**
-      * Normalize a criterion to an array.
+      * Normalize a criterion.
+      *
+      * From:
+      *     - ['isNull']
+      *     - ['>', 9]
+      *
+      * To:
+      *     - ['isNull', null]
+      *     - ['gt', 9]
       *
       * @param array $criterion
-      * @return array An array describing the criterion: [property, operator, value]
+      * @return array An array describing the criterion: [operator, value]
       */
     protected function normalizeCriterion(array $criterion)
     {
-        // Case: ('property_name', 'isNull')
-        if (count($criterion) === 2) {
-            list($property, $operator) = $criterion;
+        // Case: ('isNull')
+        if (count($criterion) === 1) {
+            list($operator) = $criterion;
         }
-        // Case: ('property_name', 'lte', 35)
-        else if (count($criterion) === 3) {
-            list($property, $operator, $value) = $criterion;
+        // Case: ('lte', 35)
+        else if (count($criterion) === 2) {
+            list($operator, $value) = $criterion;
         }
         else {
             throw new \Exception('Invalid Criterion');
@@ -229,15 +234,11 @@ class Finder
 
         $operator = $this->normalizeOperator($operator);
 
-        if (strpos($property, '.') === false) {
-            $property = $this->repo->getAlias().'.'.$property;
-        }
-
         if (!isset($value)) {
             $value = null;
         }
 
-        return array($property, $operator, $value);
+        return array($operator, $value);
     }
 
     protected function normalizeOperator($operator)
