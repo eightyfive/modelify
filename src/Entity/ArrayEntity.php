@@ -9,7 +9,7 @@ abstract class ArrayEntity extends Entity
 
     public function setAttribute($key, $value)
     {
-        if (!in_array($key, $this->schema) {
+        if (count($this->schema) && !in_array($key, $this->schema) {
             throw new RuntimeException('Unknown attribute: '.$key);
         }
 
@@ -18,7 +18,7 @@ abstract class ArrayEntity extends Entity
 
     public function getAttribute($key)
     {
-        if (!in_array($key, $this->schema) {
+        if (count($this->schema) && !in_array($key, $this->schema) {
             throw new RuntimeException('Unknown attribute: '.$key);
         }
 
