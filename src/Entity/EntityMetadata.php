@@ -19,6 +19,11 @@ class EntityMetadata
         return $this->entityClassName;
     }
 
+    public function setTableName($table)
+    {
+        $this->tableName = $table;
+    }
+
     public function getTableName()
     {
         if (!isset($this->tableName)) {
@@ -30,9 +35,19 @@ class EntityMetadata
         return $this->tableName;
     }
 
+    public function setPrimaryKey($key)
+    {
+        $this->primaryKey = $key;
+    }
+
     public function getPrimaryKey()
     {
         return $this->primaryKey;
+    }
+
+    public function setForeignKey($key)
+    {
+        $this->foreignKey = $key;
     }
 
     public function getForeignKey()

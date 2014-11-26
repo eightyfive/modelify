@@ -3,7 +3,7 @@ namespace Eyf\Modelify\Entity;
 
 abstract class Entity implements EntityInterface, \JsonSerializable
 {
-    protected static $metadata;
+    protected static $metadata = array();
 
     public function __construct(array $attrs = array())
     {
@@ -61,15 +61,20 @@ abstract class Entity implements EntityInterface, \JsonSerializable
 
     public static function getMetadata()
     {
-        if (!isset(static::$metadata)) {
-            static::$metadata = static::getMetadataInstance();
-        }
-
-        return static::$metadata;
+        return self::getEntityMetadata(get_called_class());
     }
 
-    protected static function getMetadataInstance()
+    protected static function getEntityMetadata($className)
     {
-        return new EntityMetadata(get_called_class());
+        if (!isset(self::$metadata[$className])) {
+            self::$metadata[$className] = static::getMetadataInstance($className);
+        }
+
+        return self::$metadata[$className];
+    }
+
+    protected static function getMetadataInstance($className)
+    {
+        return new EntityMetadata($className);
     }
 }

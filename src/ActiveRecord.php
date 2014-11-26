@@ -84,9 +84,9 @@ abstract class ActiveRecord extends ArrayEntity
       *
       * @return array The records.
       */
-    public static function findAll()
+    public static function findAll($orderBy = null, $limit = null, $offset = null)
     {
-        return static::getRepository()->findAll();
+        return static::getRepository()->findAll($orderBy, $limit, $offset);
     }
 
     /**
@@ -128,7 +128,7 @@ abstract class ActiveRecord extends ArrayEntity
     protected function hasMany($className, $orderBy = null)
     {
       if (!isset($this->hasMany[$className])) {
-        $this->hasMany[$className] = $this->getEntityRepository($className)->findBy(array(array($this->getForeignKey(), 'eq', $this->getId())), $orderBy);
+        $this->hasMany[$className] = $this->getEntityRepository($className)->findBy(array($this->getForeignKey() => $this->getId()), $orderBy);
       }
 
       return $this->hasMany[$className];
