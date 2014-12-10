@@ -122,7 +122,7 @@ class RepositoryTranslatable extends Repository
             }
 
             // This criterion is part of the Translations table
-            unset($criteria[$i]);
+            unset($criteria[$attr]);
             
             $aliased = $this->transAlias.'.'.$attr;
             $criteriaAliased[$aliased] = $criterion;
