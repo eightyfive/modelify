@@ -122,7 +122,7 @@ class Repository
         }
       }
 
-      $data = $entity->getAttributes();
+      $data = $entity->toStore();
       $qb = $this->db->createQueryBuilder();
 
       if ($isUpdate) {

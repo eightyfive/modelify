@@ -43,6 +43,11 @@ abstract class Entity implements EntityInterface, \JsonSerializable
         // ..
     }
 
+    public function toStore()
+    {
+        return $this->getAttributes();
+    }
+
     public function toArray()
     {
         return $this->getAttributes();
