@@ -15,6 +15,8 @@ abstract class ActiveRecord extends ArrayEntity
 
     protected $hasMany              = array();
     protected $hasAndBelongsToMany  = array();
+    protected $belongsTo            = array();
+    protected $hasOne               = array();
 
     /**
       * Set the DBAL connection
@@ -160,26 +162,33 @@ abstract class ActiveRecord extends ArrayEntity
 
     protected function belongsTo($className)
     {
-      if (!isset($this->relationships[$className]))
+      if (!isset($this->belongsTo[$className]))
       {
         $owner = new $className;
-        $ownerId = $this[$owner->getForeignKey()];
+        $ownerId = $this->{$owner->getForeignKey()};
+        $this->belongsTo[$className] = call_user_func(array($className, 'find'), $ownerId);
 
-        $this->relationships[$className] = call_user_func(array($className, 'find'), $ownerId);
+        if (!$this->belongsTo[$className])
+        {
+          dd($this->toStore());
+          ll($owner->getForeignKey());
+          ll($className);
+          dd($ownerId);
+        }
       }
 
-      return $this->relationships[$className];
+      return $this->belongsTo[$className];
     }
 
 
     protected function hasOne($className)
     {
-      if (!isset($this->relationships[$className]))
+      if (!isset($this->hasOne[$className]))
       {
-        $this->relationships[$className] = call_user_func(array($className, 'findOneBy'), array($this->getForeignKey() => $this->getId()));
+        $this->hasOne[$className] = call_user_func(array($className, 'findOneBy'), array($this->getForeignKey() => $this->getId()));
       }
 
-      return $this->relationships[$className];
+      return $this->hasOne[$className];
     }
 
     /**
