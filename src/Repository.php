@@ -83,7 +83,7 @@ class Repository
         if (!$row) {
             return null;
         }
-        
+
         return new $this->entityClassName($row);
     }
 

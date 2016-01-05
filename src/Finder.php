@@ -158,7 +158,7 @@ class Finder
 
                     if (is_string($order)) {
                         array_push($orders, array($order, null));
-                        
+
                     } else if (is_array($order)){
                         array_push($orders, array(current(array_keys($order)), current(array_values($order))));
                     }

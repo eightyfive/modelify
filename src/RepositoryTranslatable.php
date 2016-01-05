@@ -76,35 +76,49 @@ class RepositoryTranslatable extends Repository
     public function save(Entity &$entity)
     {
         $isUpdate = $entity->getId() !== null;
+        $isCreate = !$isUpdate;
 
-        if ($isUpdate) {
-
-            $qb = $this->db->createQueryBuilder();
-            $qb->update($this->transTable);
-
-            $params = array();
-            foreach ($this->translatables as $attr) {
-                $params[$attr] = $entity->{$attr};
-                unset($entity->{$attr});
-
-                $qb->set($attr,  ":{$attr}");
-            }
-            $params[$this->getForeignKey()] = $entity->getId();
-            $params['locale'] = $this->getLocale();
-
-            $qb->where($this->getForeignKey().' = :'.$this->getForeignKey());
-            $qb->andWhere('locale = :locale');
-            $qb->setParameters($params);
-            $qb->execute();
+        // Save Translations params
+        $tParams = array();
+        foreach ($this->translatables as $attr) {
+            $tParams[$attr] = $entity->{$attr};
+            unset($entity->{$attr});
         }
 
         parent::save($entity);
+
+        // Update Translations table
+        $qb = $this->db->createQueryBuilder();
+
+        if ($isCreate) {
+            $qb->insert($this->transTable);
+            foreach (array_keys($tParams) as $attr) {
+                $qb->setValue($attr,  ":{$attr}");
+            }
+            $qb->setValue($this->getForeignKey(),  ":{$this->getForeignKey()}");
+            $qb->setValue('locale', ":locale");
+        } else {
+            $qb->update($this->transTable);
+            foreach (array_keys($tParams) as $attr) {
+                $qb->set($attr,  ":{$attr}");
+            }
+            $qb->where($this->getForeignKey().' = :'.$this->getForeignKey());
+            $qb->andWhere('locale = :locale');
+        }
+
+        $tParams[$this->getForeignKey()] = $entity->getId();
+        $tParams['locale'] = $this->getLocale();
+
+        $qb->setParameters($tParams);
+        $qb->execute();
     }
 
     public function delete(Entity $entity)
     {
-        // TODO
+        $id = $entity->getId();
         parent::delete($entity);
+
+        $this->db->delete($this->transTable, array($this->getForeignKey() => $id));
     }
 
     protected function addTransAlias($criteria)
@@ -123,7 +137,7 @@ class RepositoryTranslatable extends Repository
 
             // This criterion is part of the Translations table
             unset($criteria[$attr]);
-            
+
             $aliased = $this->transAlias.'.'.$attr;
             $criteriaAliased[$aliased] = $criterion;
         }
