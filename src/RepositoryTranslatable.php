@@ -81,8 +81,10 @@ class RepositoryTranslatable extends Repository
         // Save Translations params
         $tParams = array();
         foreach ($this->translatables as $attr) {
-            $tParams[$attr] = $entity->{$attr};
-            unset($entity->{$attr});
+            if (isset($entity->{$attr})) {
+                $tParams[$attr] = $entity->{$attr};
+                unset($entity->{$attr});
+            }
         }
 
         parent::save($entity);
