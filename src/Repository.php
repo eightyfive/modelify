@@ -108,6 +108,11 @@ class Repository
 
     public function save(Entity &$entity)
     {
+      $data = $entity->toStore();
+      if (!count($data)) {
+        return;
+      }
+
       $isUpdate = $entity->getId() !== null;
 
       $this->beforeSave($isUpdate, $entity);
@@ -122,7 +127,6 @@ class Repository
         }
       }
 
-      $data = $entity->toStore();
       $qb = $this->db->createQueryBuilder();
 
       if ($isUpdate) {

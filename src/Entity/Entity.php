@@ -13,7 +13,7 @@ abstract class Entity implements EntityInterface, \JsonSerializable
     abstract public function getId();
     abstract public function getAttributes();
     abstract public function setAttribute($key, $value);
-    
+
     public function setAttributes(array $attrs)
     {
         foreach ($attrs as $key => $value) {
